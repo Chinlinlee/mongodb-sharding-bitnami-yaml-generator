@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": "./bin/mongodb-sharding-bitnami-yaml-generator.js",
+  "repository": "https://github.com/Chinlinlee/mongodb-sharding-bitnami-yaml-generator",
   "keywords": [
     "mongodb",
     "mongodb-sharding",
@@ -19,7 +20,7 @@
   "files": [
     "/dist",
     "/bin",
-    "/examples/"
+    "/examples"
   ],
   "dependencies": {
     "commander": "^8.3.0",
