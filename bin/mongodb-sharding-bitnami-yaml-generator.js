@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { Command } = require('commander');
 const { IInstanceConfig, MongosInstance } = require('../dist/models/mongosInstance');
 const { IGeneratorConfig } = require('../dist/models/generator');
