@@ -1,0 +1,20 @@
+{
+    "generator": {
+        "projectName": "",
+        "shardCount": 1,
+        "useSameShardConfig": true
+    },
+    "mongos": {
+        "replicaSetKey": "replicaSet123",
+        "rootPassword": "password"
+    },
+    "shards": [
+        {
+            "secondaryCount": 1,
+            "enableArbiter": true
+        }
+    ],
+    "cfg": {
+        "secondaryCount": 0
+    }
+}
