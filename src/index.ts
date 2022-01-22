@@ -15,19 +15,21 @@ function generateMongoDBShardYamlConfig(generatorConfig: IGeneratorConfig, insta
     }
     
     let mongosInstance = new MongosInstance(instanceConfig);
-    for (let shardIndex =0 ; shardIndex < generatorConfig.shardCount; shardIndex++) {
-        addGeneratorShardConfig(generatorConfig, mongosInstance, shardIndex);
+    if (generatorConfig.useSameShardConfig) {
+        addGeneratorShardConfig(generatorConfig, mongosInstance);
     }
     let mongoShardGenerator: MongoShardGenerator = new MongoShardGenerator( generatorConfig, mongosInstance);
     let yamlConfig = mongoShardGenerator.generateYamlConfig();
     return yamlConfig;
 }
 
-function addGeneratorShardConfig(generatorConfig: IGeneratorConfig, mongosInstance: MongosInstance, index: number) {
-    if (generatorConfig.useSameShardConfig) {
-        mongosInstance.addShard(mongosInstance.config.shards[0]);
-    } else {
-        mongosInstance.addShard(mongosInstance.config.shards[index]);
+function addGeneratorShardConfig(generatorConfig: IGeneratorConfig, mongosInstance: MongosInstance) {
+    for (let shardIndex = 1 ; shardIndex < generatorConfig.shardCount; shardIndex++) {
+        if (mongosInstance.config.shards[shardIndex]) {
+            mongosInstance.config.shards[shardIndex] = mongosInstance.config.shards[0];
+        } else {
+            mongosInstance.addShard(mongosInstance.config.shards[0]);
+        }
     }
 }
 

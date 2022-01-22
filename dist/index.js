@@ -15,19 +15,21 @@ function generateMongoDBShardYamlConfig(generatorConfig, instanceConfig) {
         ];
     }
     var mongosInstance = new mongosInstance_1.MongosInstance(instanceConfig);
-    for (var shardIndex = 0; shardIndex < generatorConfig.shardCount; shardIndex++) {
-        addGeneratorShardConfig(generatorConfig, mongosInstance, shardIndex);
+    if (generatorConfig.useSameShardConfig) {
+        addGeneratorShardConfig(generatorConfig, mongosInstance);
     }
     var mongoShardGenerator = new mongoShardGenerator_1.MongoShardGenerator(generatorConfig, mongosInstance);
     var yamlConfig = mongoShardGenerator.generateYamlConfig();
     return yamlConfig;
 }
 exports.generateMongoDBShardYamlConfig = generateMongoDBShardYamlConfig;
-function addGeneratorShardConfig(generatorConfig, mongosInstance, index) {
-    if (generatorConfig.useSameShardConfig) {
-        mongosInstance.addShard(mongosInstance.config.shards[0]);
-    }
-    else {
-        mongosInstance.addShard(mongosInstance.config.shards[index]);
+function addGeneratorShardConfig(generatorConfig, mongosInstance) {
+    for (var shardIndex = 1; shardIndex < generatorConfig.shardCount; shardIndex++) {
+        if (mongosInstance.config.shards[shardIndex]) {
+            mongosInstance.config.shards[shardIndex] = mongosInstance.config.shards[0];
+        }
+        else {
+            mongosInstance.addShard(mongosInstance.config.shards[0]);
+        }
     }
 }
