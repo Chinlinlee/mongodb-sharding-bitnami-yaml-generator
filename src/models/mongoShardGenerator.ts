@@ -24,6 +24,7 @@ export class MongoShardGenerator {
         let mongosYaml = {
             [`${this.prefixProjectName}mongodb-mongos`]: {
                 image: "docker.io/bitnami/mongodb-sharded:4.4",
+                container_name: `${this.prefixProjectName}mongodb-mongos`,
                 environment: [
                     `MONGODB_ADVERTISED_HOSTNAME=${this.prefixProjectName}mongodb-mongos`,
                     `MONGODB_SHARDING_MODE=mongos`,
@@ -52,6 +53,7 @@ export class MongoShardGenerator {
             let shardPrimaryYaml = {
                 [`${this.prefixProjectName}mongodb-shard${shardIndex}-primary`]: {
                     image: "docker.io/bitnami/mongodb-sharded:4.4",
+                    container_name: `${this.prefixProjectName}mongodb-shard${shardIndex}-primary`,
                     environment: [
                         `MONGODB_ADVERTISED_HOSTNAME=${this.prefixProjectName}mongodb-shard${shardIndex}-primary`,
                         `MONGODB_SHARDING_MODE=shardsvr`,
@@ -95,6 +97,7 @@ export class MongoShardGenerator {
             let secondaryNodeYaml = {
                 [`${this.prefixProjectName}mongodb-shard${shardIndex}-secondary${i}`]: {
                     image: "docker.io/bitnami/mongodb-sharded:4.4",
+                    container_name: `${this.prefixProjectName}mongodb-shard${shardIndex}-secondary${i}`,
                     environment: [
                         `MONGODB_ADVERTISED_HOSTNAME=${this.prefixProjectName}mongodb-shard${shardIndex}-secondary${i}`,
                         `MONGODB_SHARDING_MODE=shardsvr`,
@@ -121,6 +124,7 @@ export class MongoShardGenerator {
             let arbiterYaml = {
                 [`${this.prefixProjectName}mongodb-shard${shardIndex}-arbiter`]: {
                     image: "docker.io/bitnami/mongodb-sharded:4.4",
+                    container_name: `${this.prefixProjectName}mongodb-shard${shardIndex}-arbiter`,
                     environment: [
                         `MONGODB_ADVERTISED_HOSTNAME=${this.prefixProjectName}mongodb-shard${shardIndex}-arbiter`,
                         `MONGODB_SHARDING_MODE=shardsvr`,
@@ -148,6 +152,7 @@ export class MongoShardGenerator {
         let cfgPrimaryYaml = {
             [`${this.prefixProjectName}mongodb-cfg-primary`]: {
                 image: "docker.io/bitnami/mongodb-sharded:4.4",
+                container_name: `${this.prefixProjectName}mongodb-cfg-primary`,
                 environment: [
                     `MONGODB_ADVERTISED_HOSTNAME=${this.prefixProjectName}mongodb-cfg-primary`,
                     `MONGODB_SHARDING_MODE=configsvr`,
@@ -169,6 +174,7 @@ export class MongoShardGenerator {
             let cfgSecondaryYaml = {
                 [`${this.prefixProjectName}mongodb-cfg-secondary${cfgCount}`]: {
                     image: "docker.io/bitnami/mongodb-sharded:4.4",
+                    container_name: `${this.prefixProjectName}mongodb-cfg-secondary${cfgCount}`,
                     environment: [
                         `MONGODB_ADVERTISED_HOSTNAME=${this.prefixProjectName}mongodb-cfg-secondary${cfgCount}`,
                         `MONGODB_SHARDING_MODE=configsvr`,
