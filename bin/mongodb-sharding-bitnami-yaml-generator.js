@@ -55,20 +55,17 @@ if (configJson["generator"]) {
 }
 
 if (configJson["mongos"]) {
-    instanceConfig = {
-        ...instanceConfig,
+    instanceConfig.mongos = {
+        ...instanceConfig.mongos,
         ...configJson["mongos"]
     };
 }
 if (configJson["shards"]) {
-    instanceConfig = {
-        ...instanceConfig,
-        ...configJson["shards"]
-    };
+    instanceConfig.shards = [...configJson["shards"]];
 }
 if (configJson["cfg"]) {
-    instanceConfig = {
-        ...instanceConfig,
+    instanceConfig.cfg = {
+        ...instanceConfig.cfg,
         ...configJson["cfg"]
     };
 }
