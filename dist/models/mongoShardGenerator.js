@@ -12,7 +12,11 @@ var __assign = (this && this.__assign) || function () {
 };
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -41,6 +45,10 @@ var MongoShardGenerator = /** @class */ (function () {
         };
         this.mongosInstance = null;
         this.prefixProjectName = "";
+        this.result = {
+            "mkdirScript": "",
+            "yamlStr": ""
+        };
         this.generatorYamlConfig = __assign({}, iGeneratorYamlConfig);
         this.mongosInstance = iMongosInstance;
     }
@@ -50,50 +58,53 @@ var MongoShardGenerator = /** @class */ (function () {
             version: "3.4",
             services: {}
         };
-        this.prefixProjectName = this.generatorYamlConfig.projectName ? this.generatorYamlConfig.projectName + "-" : "";
+        this.result.mkdirScript = "#!/bin/bash\r\n";
+        this.prefixProjectName = this.generatorYamlConfig.projectName ? "".concat(this.generatorYamlConfig.projectName, "-") : "";
         var mongosYaml = (_a = {},
-            _a[this.prefixProjectName + "mongodb-mongos"] = {
+            _a["".concat(this.prefixProjectName, "mongodb-mongos")] = {
                 image: "docker.io/bitnami/mongodb-sharded:4.4",
-                container_name: this.prefixProjectName + "mongodb-mongos",
+                container_name: "".concat(this.prefixProjectName, "mongodb-mongos"),
                 environment: [
-                    "MONGODB_ADVERTISED_HOSTNAME=" + this.prefixProjectName + "mongodb-mongos",
+                    "MONGODB_ADVERTISED_HOSTNAME=".concat(this.prefixProjectName, "mongodb-mongos"),
                     "MONGODB_SHARDING_MODE=mongos",
-                    "MONGODB_CFG_PRIMARY_HOST=" + this.prefixProjectName + "mongodb-cfg-primary",
-                    "MONGODB_CFG_REPLICA_SET_NAME=" + this.prefixProjectName + "replicaSet-cfg",
-                    "MONGODB_REPLICA_SET_KEY=" + this.mongosInstance.config.mongos.replicaSetKey,
-                    "MONGODB_ROOT_PASSWORD=" + this.mongosInstance.config.mongos.rootPassword
+                    "MONGODB_CFG_PRIMARY_HOST=".concat(this.prefixProjectName, "mongodb-cfg-primary"),
+                    "MONGODB_CFG_REPLICA_SET_NAME=".concat(this.prefixProjectName, "replicaSet-cfg"),
+                    "MONGODB_REPLICA_SET_KEY=".concat(this.mongosInstance.config.mongos.replicaSetKey),
+                    "MONGODB_ROOT_PASSWORD=".concat(this.mongosInstance.config.mongos.rootPassword)
                 ],
                 volumes: [
-                    "./" + this.prefixProjectName + "mongodb-shard/mongos-data:/bitnami"
+                    "./".concat(this.prefixProjectName, "mongodb-shard/mongos-data:/bitnami")
                 ],
                 ports: [
                     "27017:27017"
                 ]
             },
             _a);
+        this.result.mkdirScript += "mkdir -p ./".concat(this.prefixProjectName, "mongodb-shard/mongos-data/mongodb/data/db\r\n");
         composeConfig.services = __assign(__assign({}, composeConfig.services), mongosYaml);
         this.addCfgYamlConfig(composeConfig);
         var shardIndex = 0;
         for (var _i = 0, _c = this.mongosInstance.config.shards; _i < _c.length; _i++) {
             var shardConfig = _c[_i];
             var shardPrimaryYaml = (_b = {},
-                _b[this.prefixProjectName + "mongodb-shard" + shardIndex + "-primary"] = {
+                _b["".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-primary")] = {
                     image: "docker.io/bitnami/mongodb-sharded:4.4",
-                    container_name: this.prefixProjectName + "mongodb-shard" + shardIndex + "-primary",
+                    container_name: "".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-primary"),
                     environment: [
-                        "MONGODB_ADVERTISED_HOSTNAME=" + this.prefixProjectName + "mongodb-shard" + shardIndex + "-primary",
+                        "MONGODB_ADVERTISED_HOSTNAME=".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-primary"),
                         "MONGODB_SHARDING_MODE=shardsvr",
-                        "MONGODB_MONGOS_HOST=" + this.prefixProjectName + "mongodb-mongos",
-                        "MONGODB_ROOT_PASSWORD=" + this.mongosInstance.config.mongos.rootPassword,
+                        "MONGODB_MONGOS_HOST=".concat(this.prefixProjectName, "mongodb-mongos"),
+                        "MONGODB_ROOT_PASSWORD=".concat(this.mongosInstance.config.mongos.rootPassword),
                         "MONGODB_REPLICA_SET_MODE=primary",
-                        "MONGODB_REPLICA_SET_KEY=" + this.mongosInstance.config.mongos.replicaSetKey,
-                        "MONGODB_REPLICA_SET_NAME=" + this.prefixProjectName + "replicaSet-shard" + shardIndex
+                        "MONGODB_REPLICA_SET_KEY=".concat(this.mongosInstance.config.mongos.replicaSetKey),
+                        "MONGODB_REPLICA_SET_NAME=".concat(this.prefixProjectName, "replicaSet-shard").concat(shardIndex)
                     ],
                     volumes: [
-                        "./" + this.prefixProjectName + "mongodb-shard/shard" + shardIndex + "-primary-data:/bitnami"
+                        "./".concat(this.prefixProjectName, "mongodb-shard/shard").concat(shardIndex, "-primary-data:/bitnami")
                     ]
                 },
                 _b);
+            this.result.mkdirScript += "mkdir -p ./".concat(this.prefixProjectName, "mongodb-shard/shard").concat(shardIndex, "-primary-data/mongodb/data/db\r\n");
             composeConfig.services = __assign(__assign({}, composeConfig.services), shardPrimaryYaml);
             var secondaryYamlConfigList = this.getShardSecondaryNodesYamlConfig(shardConfig, shardIndex);
             for (var i = 0; i < secondaryYamlConfigList.length; i++) {
@@ -103,6 +114,7 @@ var MongoShardGenerator = /** @class */ (function () {
             shardIndex++;
         }
         var yamlStr = yaml.dump(composeConfig);
+        this.result.yamlStr = yamlStr;
         return yamlStr;
     };
     MongoShardGenerator.prototype.getShardSecondaryNodesYamlConfig = function (shardConfig, shardIndex) {
@@ -110,25 +122,26 @@ var MongoShardGenerator = /** @class */ (function () {
         var yamlConfigList = [];
         for (var i = 0; i < shardConfig.secondaryCount; i++) {
             var secondaryNodeYaml = (_a = {},
-                _a[this.prefixProjectName + "mongodb-shard" + shardIndex + "-secondary" + i] = {
+                _a["".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-secondary").concat(i)] = {
                     image: "docker.io/bitnami/mongodb-sharded:4.4",
-                    container_name: this.prefixProjectName + "mongodb-shard" + shardIndex + "-secondary" + i,
+                    container_name: "".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-secondary").concat(i),
                     environment: [
-                        "MONGODB_ADVERTISED_HOSTNAME=" + this.prefixProjectName + "mongodb-shard" + shardIndex + "-secondary" + i,
+                        "MONGODB_ADVERTISED_HOSTNAME=".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-secondary").concat(i),
                         "MONGODB_SHARDING_MODE=shardsvr",
-                        "MONGODB_MONGOS_HOST=" + this.prefixProjectName + "mongodb-mongos",
-                        "MONGODB_INITIAL_PRIMARY_HOST=" + this.prefixProjectName + "mongodb-shard" + shardIndex + "-primary",
+                        "MONGODB_MONGOS_HOST=".concat(this.prefixProjectName, "mongodb-mongos"),
+                        "MONGODB_INITIAL_PRIMARY_HOST=".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-primary"),
                         "MONGODB_INITIAL_PRIMARY_PORT_NUMBER=27017",
-                        "MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=" + this.mongosInstance.config.mongos.rootPassword,
+                        "MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=".concat(this.mongosInstance.config.mongos.rootPassword),
                         "MONGODB_REPLICA_SET_MODE=secondary",
-                        "MONGODB_REPLICA_SET_KEY=" + this.mongosInstance.config.mongos.replicaSetKey,
-                        "MONGODB_REPLICA_SET_NAME=" + this.prefixProjectName + "replicaSet-shard" + shardIndex
+                        "MONGODB_REPLICA_SET_KEY=".concat(this.mongosInstance.config.mongos.replicaSetKey),
+                        "MONGODB_REPLICA_SET_NAME=".concat(this.prefixProjectName, "replicaSet-shard").concat(shardIndex)
                     ],
                     volumes: [
-                        "./" + this.prefixProjectName + "mongodb-shard/shard" + shardIndex + "-secondary" + i + "-data:/bitnami"
+                        "./".concat(this.prefixProjectName, "mongodb-shard/shard").concat(shardIndex, "-secondary").concat(i, "-data:/bitnami")
                     ]
                 },
                 _a);
+            this.result.mkdirScript += "mkdir -p ./".concat(this.prefixProjectName, "mongodb-shard/shard").concat(shardIndex, "-secondary").concat(i, "-data/mongodb/data/db\r\n");
             yamlConfigList.push(secondaryNodeYaml);
         }
         return yamlConfigList;
@@ -137,67 +150,70 @@ var MongoShardGenerator = /** @class */ (function () {
         var _a;
         if (shardConfig.enableArbiter) {
             var arbiterYaml = (_a = {},
-                _a[this.prefixProjectName + "mongodb-shard" + shardIndex + "-arbiter"] = {
+                _a["".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-arbiter")] = {
                     image: "docker.io/bitnami/mongodb-sharded:4.4",
-                    container_name: this.prefixProjectName + "mongodb-shard" + shardIndex + "-arbiter",
+                    container_name: "".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-arbiter"),
                     environment: [
-                        "MONGODB_ADVERTISED_HOSTNAME=" + this.prefixProjectName + "mongodb-shard" + shardIndex + "-arbiter",
+                        "MONGODB_ADVERTISED_HOSTNAME=".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-arbiter"),
                         "MONGODB_SHARDING_MODE=shardsvr",
-                        "MONGODB_MONGOS_HOST=" + this.prefixProjectName + "mongodb-mongos",
-                        "MONGODB_INITIAL_PRIMARY_HOST=" + this.prefixProjectName + "mongodb-shard" + shardIndex + "-primary",
+                        "MONGODB_MONGOS_HOST=".concat(this.prefixProjectName, "mongodb-mongos"),
+                        "MONGODB_INITIAL_PRIMARY_HOST=".concat(this.prefixProjectName, "mongodb-shard").concat(shardIndex, "-primary"),
                         "MONGODB_INITIAL_PRIMARY_PORT_NUMBER=27017",
-                        "MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=" + this.mongosInstance.config.mongos.rootPassword,
+                        "MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD=".concat(this.mongosInstance.config.mongos.rootPassword),
                         "MONGODB_REPLICA_SET_MODE=arbiter",
-                        "MONGODB_REPLICA_SET_KEY=" + this.mongosInstance.config.mongos.replicaSetKey,
-                        "MONGODB_REPLICA_SET_NAME=" + this.prefixProjectName + "replicaSet-shard" + shardIndex
+                        "MONGODB_REPLICA_SET_KEY=".concat(this.mongosInstance.config.mongos.replicaSetKey),
+                        "MONGODB_REPLICA_SET_NAME=".concat(this.prefixProjectName, "replicaSet-shard").concat(shardIndex)
                     ],
                     volumes: [
-                        "./" + this.prefixProjectName + "mongodb-shard/shard" + shardIndex + "-arbiter-data:/bitnami"
+                        "./".concat(this.prefixProjectName, "mongodb-shard/shard").concat(shardIndex, "-arbiter-data:/bitnami")
                     ]
                 },
                 _a);
+            this.result.mkdirScript += "mkdir -p ./".concat(this.prefixProjectName, "mongodb-shard/shard").concat(shardIndex, "-arbiter-data/mongodb/data/db\r\n");
             composeConfig.services = __assign(__assign({}, composeConfig.services), arbiterYaml);
         }
     };
     MongoShardGenerator.prototype.addCfgYamlConfig = function (composeConfig) {
         var _a, _b;
         var cfgPrimaryYaml = (_a = {},
-            _a[this.prefixProjectName + "mongodb-cfg-primary"] = {
+            _a["".concat(this.prefixProjectName, "mongodb-cfg-primary")] = {
                 image: "docker.io/bitnami/mongodb-sharded:4.4",
-                container_name: this.prefixProjectName + "mongodb-cfg-primary",
+                container_name: "".concat(this.prefixProjectName, "mongodb-cfg-primary"),
                 environment: [
-                    "MONGODB_ADVERTISED_HOSTNAME=" + this.prefixProjectName + "mongodb-cfg-primary",
+                    "MONGODB_ADVERTISED_HOSTNAME=".concat(this.prefixProjectName, "mongodb-cfg-primary"),
                     "MONGODB_SHARDING_MODE=configsvr",
-                    "MONGODB_ROOT_PASSWORD=" + this.mongosInstance.config.mongos.rootPassword,
+                    "MONGODB_ROOT_PASSWORD=".concat(this.mongosInstance.config.mongos.rootPassword),
                     "MONGODB_REPLICA_SET_MODE=primary",
-                    "MONGODB_REPLICA_SET_KEY=" + this.mongosInstance.config.mongos.replicaSetKey,
-                    "MONGODB_REPLICA_SET_NAME=" + this.prefixProjectName + "replicaSet-cfg"
+                    "MONGODB_REPLICA_SET_KEY=".concat(this.mongosInstance.config.mongos.replicaSetKey),
+                    "MONGODB_REPLICA_SET_NAME=".concat(this.prefixProjectName, "replicaSet-cfg")
                 ],
                 volumes: [
-                    "./" + this.prefixProjectName + "mongodb-shard/cfg-data:/bitnami"
+                    "./".concat(this.prefixProjectName, "mongodb-shard/cfg-data:/bitnami")
                 ]
             },
             _a);
+        this.result.mkdirScript += "mkdir -p ./".concat(this.prefixProjectName, "mongodb-shard/cfg-data/mongodb/data/db\r\n");
         composeConfig.services = __assign(__assign({}, composeConfig.services), cfgPrimaryYaml);
         for (var cfgCount = 0; cfgCount < this.mongosInstance.config.cfg.secondaryCount; cfgCount++) {
             var cfgSecondaryYaml = (_b = {},
-                _b[this.prefixProjectName + "mongodb-cfg-secondary" + cfgCount] = {
+                _b["".concat(this.prefixProjectName, "mongodb-cfg-secondary").concat(cfgCount)] = {
                     image: "docker.io/bitnami/mongodb-sharded:4.4",
-                    container_name: this.prefixProjectName + "mongodb-cfg-secondary" + cfgCount,
+                    container_name: "".concat(this.prefixProjectName, "mongodb-cfg-secondary").concat(cfgCount),
                     environment: [
-                        "MONGODB_ADVERTISED_HOSTNAME=" + this.prefixProjectName + "mongodb-cfg-secondary" + cfgCount,
+                        "MONGODB_ADVERTISED_HOSTNAME=".concat(this.prefixProjectName, "mongodb-cfg-secondary").concat(cfgCount),
                         "MONGODB_SHARDING_MODE=configsvr",
-                        "MONGODB_PRIMARY_HOST=" + this.prefixProjectName + "mongodb-cfg-primary",
-                        "MONGODB_PRIMARY_ROOT_PASSWORD=" + this.mongosInstance.config.mongos.rootPassword,
+                        "MONGODB_PRIMARY_HOST=".concat(this.prefixProjectName, "mongodb-cfg-primary"),
+                        "MONGODB_PRIMARY_ROOT_PASSWORD=".concat(this.mongosInstance.config.mongos.rootPassword),
                         "MONGODB_REPLICA_SET_MODE=secondary",
-                        "MONGODB_REPLICA_SET_KEY=" + this.mongosInstance.config.mongos.replicaSetKey,
-                        "MONGODB_REPLICA_SET_NAME=" + this.prefixProjectName + "replicaSet-cfg"
+                        "MONGODB_REPLICA_SET_KEY=".concat(this.mongosInstance.config.mongos.replicaSetKey),
+                        "MONGODB_REPLICA_SET_NAME=".concat(this.prefixProjectName, "replicaSet-cfg")
                     ],
                     volumes: [
-                        "./" + this.prefixProjectName + "mongodb-shard/cfg-data:/bitnami"
+                        "./".concat(this.prefixProjectName, "mongodb-shard/cfg-data:/bitnami")
                     ]
                 },
                 _b);
+            this.result.mkdirScript += "mkdir -p ./".concat(this.prefixProjectName, "mongodb-shard/cfg-data/mongodb/data/db\r\n");
             composeConfig.services = __assign(__assign({}, composeConfig.services), cfgSecondaryYaml);
         }
     };

@@ -7,3 +7,7 @@ export interface IDockerComposeYaml {
     version: string;
     services: Object;
 }
+export interface IGenerateResult {
+    yamlStr: string;
+    mkdirScript: string;
+}

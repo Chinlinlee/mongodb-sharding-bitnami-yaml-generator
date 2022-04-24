@@ -76,12 +76,16 @@ if (path.isAbsolute(opts.output)) {
 } else {
     outputFilePath = path.join(process.cwd(), opts.output);
 }
-let yamlStr = generateMongoDBShardYamlConfig(generatorConfig, instanceConfig);
+let {yamlStr, mkdirScript} = generateMongoDBShardYamlConfig(generatorConfig, instanceConfig);
 try {
     fs.writeFileSync(outputFilePath, yamlStr);
+    let dirname = path.dirname(outputFilePath);
+    let mkdirScriptPath = path.join(dirname, "mkdir-mongodb-shard.sh");
+    fs.writeFileSync(mkdirScriptPath, mkdirScript);
     console.log(`generate yaml config file successfully at ${outputFilePath}`);
 } catch(e) {
     console.error(e);
+    throw e;
 }
 
 

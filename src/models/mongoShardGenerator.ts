@@ -1,4 +1,4 @@
-import { IDockerComposeYaml, IGeneratorConfig } from "./generator";
+import { IDockerComposeYaml, IGeneratorConfig, IGenerateResult } from "./generator";
 import { IShardConfig } from "./shard";
 import { MongosInstance } from "./mongosInstance";
 import * as yaml from 'js-yaml';
@@ -11,6 +11,10 @@ export class MongoShardGenerator {
     };
     mongosInstance: MongosInstance = null as unknown as MongosInstance;
     private prefixProjectName: string = "";
+    result: IGenerateResult = {
+        "mkdirScript": "",
+        "yamlStr": ""
+    };
     constructor(iGeneratorYamlConfig: IGeneratorConfig, iMongosInstance: MongosInstance) {
         this.generatorYamlConfig = {...iGeneratorYamlConfig};
         this.mongosInstance = iMongosInstance;
@@ -20,6 +24,7 @@ export class MongoShardGenerator {
             version: "3.4",
             services: {}
         };
+        this.result.mkdirScript = `#!/bin/bash\r\n`;
         this.prefixProjectName = this.generatorYamlConfig.projectName ? `${this.generatorYamlConfig.projectName}-` : "";
         let mongosYaml = {
             [`${this.prefixProjectName}mongodb-mongos`]: {
@@ -41,6 +46,7 @@ export class MongoShardGenerator {
                 ]
             } 
         };
+        this.result.mkdirScript += `mkdir -p ./${this.prefixProjectName}mongodb-shard/mongos-data/mongodb/data/db\r\n`;
         composeConfig.services = {
             ...composeConfig.services,
             ...mongosYaml
@@ -69,6 +75,7 @@ export class MongoShardGenerator {
                 }
                 
             };
+            this.result.mkdirScript += `mkdir -p ./${this.prefixProjectName}mongodb-shard/shard${shardIndex}-primary-data/mongodb/data/db\r\n`;
             composeConfig.services = {
                 ...composeConfig.services,
                 ...shardPrimaryYaml
@@ -88,6 +95,7 @@ export class MongoShardGenerator {
         }
 
         let yamlStr = yaml.dump(composeConfig);
+        this.result.yamlStr = yamlStr;
         return yamlStr;
     }
     
@@ -114,6 +122,7 @@ export class MongoShardGenerator {
                     ]
                 }
             }
+            this.result.mkdirScript += `mkdir -p ./${this.prefixProjectName}mongodb-shard/shard${shardIndex}-secondary${i}-data/mongodb/data/db\r\n`;
             yamlConfigList.push(secondaryNodeYaml);
         }
         return yamlConfigList;
@@ -141,6 +150,7 @@ export class MongoShardGenerator {
                     ]
                 }
             }
+            this.result.mkdirScript += `mkdir -p ./${this.prefixProjectName}mongodb-shard/shard${shardIndex}-arbiter-data/mongodb/data/db\r\n`;
             composeConfig.services = {
                 ...composeConfig.services,
                 ...arbiterYaml
@@ -166,6 +176,7 @@ export class MongoShardGenerator {
                 ]
             }
         }
+        this.result.mkdirScript += `mkdir -p ./${this.prefixProjectName}mongodb-shard/cfg-data/mongodb/data/db\r\n`;
         composeConfig.services = {
             ...composeConfig.services,
             ...cfgPrimaryYaml
@@ -189,6 +200,7 @@ export class MongoShardGenerator {
                     ]
                 }
             }
+            this.result.mkdirScript += `mkdir -p ./${this.prefixProjectName}mongodb-shard/cfg-data/mongodb/data/db\r\n`;
             composeConfig.services = {
                 ...composeConfig.services,
                 ...cfgSecondaryYaml

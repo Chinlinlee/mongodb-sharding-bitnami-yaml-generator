@@ -19,8 +19,8 @@ function generateMongoDBShardYamlConfig(generatorConfig, instanceConfig) {
         addGeneratorShardConfig(generatorConfig, mongosInstance);
     }
     var mongoShardGenerator = new mongoShardGenerator_1.MongoShardGenerator(generatorConfig, mongosInstance);
-    var yamlConfig = mongoShardGenerator.generateYamlConfig();
-    return yamlConfig;
+    mongoShardGenerator.generateYamlConfig();
+    return mongoShardGenerator.result;
 }
 exports.generateMongoDBShardYamlConfig = generateMongoDBShardYamlConfig;
 function addGeneratorShardConfig(generatorConfig, mongosInstance) {

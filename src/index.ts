@@ -1,8 +1,8 @@
-import { IGeneratorConfig } from './models/generator';
+import { IGeneratorConfig, IGenerateResult } from './models/generator';
 import { IInstanceConfig, MongosInstance } from './models/mongosInstance';
 import { MongoShardGenerator } from './models/mongoShardGenerator';
 
-function generateMongoDBShardYamlConfig(generatorConfig: IGeneratorConfig, instanceConfig: IInstanceConfig): string {
+function generateMongoDBShardYamlConfig(generatorConfig: IGeneratorConfig, instanceConfig: IInstanceConfig): IGenerateResult {
     if (!generatorConfig.useSameShardConfig && instanceConfig.shards.length!==generatorConfig.shardCount) throw new Error("The count of shard config is not same to generator count when config generatorConfig.useSameShardConfig=false");
 
     if (instanceConfig.shards.length == 0) {
@@ -19,8 +19,8 @@ function generateMongoDBShardYamlConfig(generatorConfig: IGeneratorConfig, insta
         addGeneratorShardConfig(generatorConfig, mongosInstance);
     }
     let mongoShardGenerator: MongoShardGenerator = new MongoShardGenerator( generatorConfig, mongosInstance);
-    let yamlConfig = mongoShardGenerator.generateYamlConfig();
-    return yamlConfig;
+    mongoShardGenerator.generateYamlConfig();
+    return mongoShardGenerator.result;
 }
 
 function addGeneratorShardConfig(generatorConfig: IGeneratorConfig, mongosInstance: MongosInstance) {
